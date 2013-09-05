@@ -1,0 +1,40 @@
+
+(in-package :learn-wl)
+
+;; Define callback function to initialize new sessions
+;; (defun init-user-session (root)
+;;   (setf (widget-children root)
+;; 	(list (lambda (&rest args)
+;; 		(with-html
+;; 		  (:strong "Happy Hacking!"))))))
+
+
+(defclass blog-entry ()
+  ((id :accessor blog-entry-id)
+   (title :accessor blog-entry-title :initarg :title)
+   (content :accessor blog-entry-content :initarg :content)))
+
+; Define what a new user session should see when they come to the
+; site, which is just a list of the blog-entry objects.
+(defun init-user-session (comp)
+  ; Clean out the store; this isn't really necessary, but the store
+  ; does persist across totally separate runs, so if you muck with the
+  ; class definition it'll explode when it tries to load the old
+  ; stuff, so it's just easier.
+  (dolist
+   (obj (find-persistent-objects *default-store* 'blog-entry))
+   (delete-persistent-object *default-store* obj))
+
+  ; Put some example objects in the store
+  (persist-objects *default-store*
+                   (list
+                    (make-instance 'blog-entry
+                                   :title "How to remove a common part of a batch of files"
+                                   :content "Use awk.")
+                    (make-instance 'blog-entry
+                                   :name "How to create a project using quicklisp"
+                                   :content "(ql:quickproject #P\"project-name\"")))
+
+  (setf (composite-widgets comp)
+        (make-instance 'datalist
+                       :data-class 'blog-entry)))
